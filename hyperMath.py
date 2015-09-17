@@ -91,25 +91,38 @@ def HyperfastDGVH(pointlist):
     return g
 
 def hyperDelta(p,delta):
-    n_p = tuple(map(lambda x,y: x+y),p,delta)
-    if hDist(p,n_p)>1.0:
+    n_p = tuple(map(lambda x,y: x+y,p,delta))
+    dist = 100.0
+    try:
+        dist = hDist(p,n_p)
+    except:
+        pass
+    if dist>1.0:
         return hyperDelta(p,tuple(map(lambda x: 0.5*x, delta)))
     return n_p
 
 
 def hyperEmbed(g):
-    locs = {x:randomPoint() for x in g.nodes()}
-    for i in range(0,100):
+    locs = {x:RandomPoint() for x in g.nodes()}
+    for i in range(0,50):
+        print(i)
+        newlocs = {}
         for p in g.nodes():
             ploc = locs[p]
             force = [0.0,0.0]
-            for q in p.nodes():
+            for q in g.nodes():
                 if p==q:
                     continue
                 qloc = locs[q]
                 dist = hDist(ploc,qloc)
+                ideal_dist = nx.astar_path_length(g,p,q)
+                delta_f = (ideal_dist-dist)*0.01
+                force[0] += (qloc[0]-ploc[0])*delta_f
+                force[1] +=(qloc[1]-ploc[1])*delta_f
+            newlocs[p] = hyperDelta(ploc,force)
+        locs = newlocs
+    return locs
 
-
-points = [RandomPoint() for x in range(100)]
-g = EuclidianfastDGVH(points)
-plotPoints(points,g)
+g = nx.powerlaw_cluster_graph(10,4,0.5)
+nx.draw(g,locs=hyperEmbed(g))
+plt.show()
