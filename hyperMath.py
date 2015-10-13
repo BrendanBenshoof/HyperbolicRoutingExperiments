@@ -227,7 +227,7 @@ def hyperEmbed(g):
                 qloc = locs[q]
                 dist = hDist(ploc, qloc)
                 ideal_dist = nx.astar_path_length(g, p, q) * 0.5
-                w = hDist((0, 0), qloc)
+                w = eDist((0, 0), qloc)
                 delta_f = (ideal_dist - dist) * 0.1 * (
                     1.0 - float(i) / MAX_iter) * w
                 weight += w
