@@ -104,6 +104,7 @@ def RunTrial(peerLogic, rlockfunc, outpath, size=100,
     g = nx.DiGraph()
     g.add_nodes_from(nodes)
     for n in nodes:
+        g.node[n]['loc'] = n.loc
         for p in n.getPeers():
             g.add_edge(n, p)
     output.append(g)
@@ -112,6 +113,7 @@ def RunTrial(peerLogic, rlockfunc, outpath, size=100,
         g = nx.DiGraph()
         g.add_nodes_from(nodes)
         for n in nodes:
+            g.node[n]['loc'] = n.loc
             for p in n.getPeers():
                 g.add_edge(n, p)
         output.append(g)
