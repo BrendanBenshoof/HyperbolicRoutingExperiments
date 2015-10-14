@@ -4,9 +4,19 @@ import threading
 
 import json
 
+import math
+
 from graphMarshal import marshal_graph
 
 from multiprocessing.pool import ThreadPool
+
+import HyperbolicSpaceMath as H
+
+
+def circle_random():
+    theta = random.random() * 2 * math.pi
+    r = random.random()**2.0
+    return math.sin(theta) * r, math.cos(theta) * r
 
 
 class Logic(object):
@@ -34,11 +44,9 @@ class Logic(object):
         candidates.remove(selected[0])
         extra = []
         for c in candidates:
-            m = self.midfunc(center, c.loc)
-            rejected = False
-            mydist = self.distfunc(center, m)
+            mydist = self.distfunc(center, c.loc)
             for p in selected:
-                if self.distfunc(p.loc, m) < mydist:
+                if self.distfunc(p.loc, c.loc) < mydist:
                     rejected = True
                     break
             if rejected:
@@ -69,7 +77,7 @@ class Node(object):
         self.short_peers = bootstraps[:]
 
     def getPeers(self):
-        return list(set(self.short_peers + self.long_peers))
+        return list(set(self.short_peers))
 
     def notify(self, other):
         self.notified.append(other)
@@ -100,7 +108,7 @@ def RunTrial(peerLogic, rlockfunc, outpath, size=200, ticksperjoin=20):
     g = nx.DiGraph()
     for i in range(size):
         newnode = Node(rlockfunc(), peerLogic)
-        newnode.join([random.choice(nodes)])
+        newnode.join(nodes)
         nodes.append(newnode)
 
         gprime = nx.DiGraph()
@@ -122,7 +130,7 @@ def euclid_random():
 
 
 def euclid_mid(a, b):
-    return list(map(lambda x, y: (x + y) / 2, a, b))
+    return b  # list(map(lambda x, y: (x + y) / 2, a, b))
 
 
 def euclid_dist(a, b):
@@ -130,5 +138,5 @@ def euclid_dist(a, b):
 
 if __name__ == "__main__":
     random.seed(0)
-    euclid_Logic = Logic(euclid_mid, euclid_dist, 3, 0)
-    RunTrial(euclid_Logic, euclid_random, "increasing_size.json", size=200)
+    euclid_Logic = Logic(lambda x, y: y, H.hDist, 4, 16)
+    RunTrial(euclid_Logic, circle_random, "Hyperincreasing_size.json", size=50)

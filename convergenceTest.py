@@ -4,9 +4,13 @@ import threading
 
 import json
 
+import math
+
 from graphMarshal import marshal_graph
 
 from multiprocessing.pool import ThreadPool
+
+import HyperbolicSpaceMath as H
 
 
 class Logic(object):
@@ -23,34 +27,33 @@ class Logic(object):
         else:
             return others
 
-    def peerFilter(self, center, others):
-        # DGVH
-        if(len(others) <= self.short_peer_min):
-            #print("not enough peers!")
-            return others, []
-        candidates = sorted(
-            others, key=lambda x: self.distfunc(center, x.loc))
-        selected = [candidates[0]]
-        candidates.remove(selected[0])
-        extra = []
-        for c in candidates:
-            m = self.midfunc(center, c.loc)
-            rejected = False
-            mydist = self.distfunc(center, m)
-            for p in selected:
-                if self.distfunc(p.loc, m) < mydist:
-                    rejected = True
-                    break
-            if rejected:
-                extra.append(c)
-            else:
-                selected.append(c)
-        #assert(len(selected) + len(extra) == len(others))
-        if(len(selected) < self.short_peer_min):
-            selected = selected + extra[:self.short_peer_min - len(selected)]
-            extra = extra[self.short_peer_min - len(selected):]
 
-        return selected, self.longPeerFilter(center, extra)
+def peerFilter(self, center, others):
+    # DGVH
+    if(len(others) <= self.short_peer_min):
+        #print("not enough peers!")
+        return others, []
+    candidates = sorted(
+        others, key=lambda x: self.distfunc(center, x.loc))
+    selected = [candidates[0]]
+    candidates.remove(selected[0])
+    extra = []
+    for c in candidates:
+        mydist = self.distfunc(center, c.loc)
+        for p in selected:
+            if self.distfunc(p.loc, c.loc) < mydist:
+                rejected = True
+                break
+        if rejected:
+            extra.append(c)
+        else:
+            selected.append(c)
+    #assert(len(selected) + len(extra) == len(others))
+    if(len(selected) < self.short_peer_min):
+        selected = selected + extra[:self.short_peer_min - len(selected)]
+        extra = extra[self.short_peer_min - len(selected):]
+
+    return selected, self.longPeerFilter(center, extra)
 
 
 class Node(object):
@@ -69,7 +72,7 @@ class Node(object):
         self.short_peers = bootstraps[:]
 
     def getPeers(self):
-        return list(set(self.short_peers + self.long_peers))
+        return list(set(self.short_peers))
 
     def notify(self, other):
         self.notified.append(other)
@@ -94,7 +97,7 @@ class Node(object):
 
 
 def RunTrial(peerLogic, rlockfunc, outpath, size=200,
-             random_peers=10, iterations=20):
+             random_peers=20, iterations=20):
     workers = ThreadPool(size)
     output = []
     nodes = [Node(rlockfunc(), peerLogic) for x in range(size)]
@@ -128,6 +131,12 @@ def euclid_random():
     return (random.random(), random.random())
 
 
+def circle_random():
+    theta = random.random() * 2 * math.pi
+    r = random.random()**2.0
+    return math.sin(theta) * r, math.cos(theta) * r
+
+
 def euclid_mid(a, b):
     return list(map(lambda x, y: (x + y) / 2, a, b))
 
@@ -137,5 +146,5 @@ def euclid_dist(a, b):
 
 if __name__ == "__main__":
     random.seed(0)
-    euclid_Logic = Logic(euclid_mid, euclid_dist, 3, 0)
-    RunTrial(euclid_Logic, euclid_random, "test.json", size=100)
+    euclid_Logic = Logic(lambda x, y: y, H.hDist, 1, 16)
+    RunTrial(euclid_Logic, circle_random, "Hypertest.json", size=100)

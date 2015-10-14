@@ -78,4 +78,4 @@ def Diameter_series(path):
         plt.show()
 
 if __name__ == "__main__":
-    Diameter_series("increasing_size.json")
+    Diameter_series("Hyperincreasing_size.json")

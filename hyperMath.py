@@ -6,8 +6,8 @@ from matplotlib import pyplot as plt
 
 def randomPoint(boundRadius=100.0):
     r = random.random()**0.5
-          # math.log(1 + random.random() * boundRadius) / math.log(1 +
-          # boundRadius)
+    # math.log(1 + random.random() * boundRadius) / math.log(1 +
+    # boundRadius)
 
     theta = 2 * math.pi * random.random()
     x = r * math.sin(theta)
@@ -134,9 +134,9 @@ def hMid(a, b):
     mid = (0, 0.99999)
     for p0 in a_pts:
         for p1 in b_pts:
-                test_mid = lineIntersect(a_pts[0], b_pts[1], k_a, k_b)
-                if dot(test_mid, test_mid) < 1.0 and fEq(hDist(k_a, test_mid), hDist(k_b, test_mid)):
-                    mid = test_mid
+            test_mid = lineIntersect(a_pts[0], b_pts[1], k_a, k_b)
+            if dot(test_mid, test_mid) < 1.0 and fEq(hDist(k_a, test_mid), hDist(k_b, test_mid)):
+                mid = test_mid
     # if not fEq(hDist(k_a, mid), hDist(k_b, mid)):
     #    print(hDist(k_a, mid), hDist(k_b, mid))
     # assert(fEq(hDist(k_a, mid), hDist(k_b, mid)))
@@ -288,28 +288,29 @@ def isGreedywLocs(g, locs, dfunc):
 
     return total_worst / (size * (size - 1))
 
-"""
-points = [randomPoint() for x in range(10)]
-g = HyperfastDGVH(points)
-print(isGreedy(g, hDist))
-plotPoints(points, g)
-degrees = {}
-for p in g:
-    degree = len(g.neighbors(p))
-    if degree in degrees.keys():
-        degrees[degree] += 1
-    else:
-        degrees[degree] = 1
-degree_seq = [0] * (max(degrees.keys()) + 1)
-for k in degrees.keys():
-    degree_seq[k] = degrees[k]
-plt.plot(degree_seq)
-plt.show()
+if __name__ == "__main__":
+    """
+    points = [randomPoint() for x in range(10)]
+    g = HyperfastDGVH(points)
+    print(isGreedy(g, hDist))
+    plotPoints(points, g)
+    degrees = {}
+    for p in g:
+        degree = len(g.neighbors(p))
+        if degree in degrees.keys():
+            degrees[degree] += 1
+        else:
+            degrees[degree] = 1
+    degree_seq = [0] * (max(degrees.keys()) + 1)
+    for k in degrees.keys():
+        degree_seq[k] = degrees[k]
+    plt.plot(degree_seq)
+    plt.show()
 
-"""
-g = nx.balanced_tree(5, 2)
+    """
+    g = nx.balanced_tree(5, 2)
 
-tmp_locs = hyperEmbed(g)
+    tmp_locs = hyperEmbed(g)
 
-nx.draw(g, pos=tmp_locs, labels={x: x for x in g.nodes()})
-plt.show()
+    nx.draw(g, pos=tmp_locs, labels={x: x for x in g.nodes()})
+    plt.show()
