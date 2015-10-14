@@ -2,10 +2,9 @@ import networkx as nx
 import random
 import threading
 
-try:
-    import cPickle as pickle
-except ImportError:
-    import pickle
+import json
+
+from graphMarshal import marshal_graph
 
 from multiprocessing.pool import ThreadPool
 
@@ -63,6 +62,9 @@ class Node(object):
         self.notified = []
         self.logic = dhtLogic
 
+    def __str__(self):
+        return str(self.loc)
+
     def join(self, bootstraps):
         self.short_peers = bootstraps[:]
 
@@ -91,8 +93,8 @@ class Node(object):
         #print(len(self.short_peers) + len(self.long_peers))
 
 
-def RunTrial(peerLogic, rlockfunc, outpath, size=100,
-             random_peers=10, iterations=100):
+def RunTrial(peerLogic, rlockfunc, outpath, size=200,
+             random_peers=10, iterations=20):
     workers = ThreadPool(size)
     output = []
     nodes = [Node(rlockfunc(), peerLogic) for x in range(size)]
@@ -117,9 +119,9 @@ def RunTrial(peerLogic, rlockfunc, outpath, size=100,
             for p in n.getPeers():
                 g.add_edge(n, p)
         output.append(g)
-    with open(outpath, "wb") as fp:
-        pickle.dump(output, fp)
-    print(i)
+        print(i)
+    with open(outpath, "w") as fp:
+        json.dump(list(map(marshal_graph, output)), fp)
 
 
 def euclid_random():
@@ -135,5 +137,5 @@ def euclid_dist(a, b):
 
 if __name__ == "__main__":
     random.seed(0)
-    euclid_Logic = Logic(euclid_mid, euclid_dist, 3, 0)
-    RunTrial(euclid_Logic, euclid_random, "test.json")
+    euclid_Logic = Logic(euclid_mid, euclid_dist, 9, 5)
+    RunTrial(euclid_Logic, euclid_random, "test.json", size=1000)
