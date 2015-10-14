@@ -12,6 +12,8 @@ from multiprocessing.pool import ThreadPool
 
 import HyperbolicSpaceMath as H
 
+HASHMAX = 2**32
+
 
 class Logic(object):
 
@@ -30,7 +32,7 @@ class Logic(object):
     def peerFilter(self, center, others):
         # DGVH
         if(len(others) <= self.short_peer_min):
-            #print("not enough peers!")
+            # print("not enough peers!")
             return others, []
         candidates = sorted(
             others, key=lambda x: self.distfunc(center, x.loc))
@@ -48,7 +50,7 @@ class Logic(object):
                 extra.append(c)
             else:
                 selected.append(c)
-        #assert(len(selected) + len(extra) == len(others))
+        # assert(len(selected) + len(extra) == len(others))
         if(len(selected) < self.short_peer_min):
             selected = selected + extra[:self.short_peer_min - len(selected)]
             extra = extra[self.short_peer_min - len(selected):]
@@ -63,6 +65,97 @@ class HyperLogic(Logic):
             return others[len(others) - self.long_peer_max:]
         else:
             return others
+
+
+class KadLogic(Logic):
+
+    def longPeerFilter(self, center, others):
+        bucketSize = 10
+        buckets = {(0, HASHMAX): [center]}
+        for o in others:
+            mybucket = None
+            for b in buckets.keys():
+                if o.loc[0] in range(b[0], b[1]):
+                    mybucket = b
+                    break
+            assert(mybucket is not None)
+            if(len(buckets[b]) < bucketSize):
+                buckets[b].append(o)
+            elif center in buckets[b]:  # split the bucket!
+                left_b = (b[0], b[0] + (b[1] - b[0]) // 2)
+                left_list = []
+                right_b = (b[0] + (b[1] - b[0]) // 2, b[1])
+                right_list = []
+                for thing in buckets[b]:
+                    if thing is not center:
+                        if thing.loc[0] in range(left_b[0], left_b[1]):
+                            left_list.append(thing)
+                        else:
+                            right_list.append(thing)
+                    else:
+                        if center[0] in range(left_b[0], left_b[1]):
+                            left_list.append(thing)
+                        else:
+                            right_list.append(thing)
+                if o.loc[0] in range(left_b[0], left_b[1]) and len(left_list) < bucketSize:
+                    left_list.append(o)
+                elif len(right_list) < bucketSize:
+                    right_list.append(o)
+                buckets[left_b] = left_list
+                buckets[right_b] = right_list
+                del buckets[b]
+        output = []
+        for b in buckets.keys():
+            output += buckets[b]
+        output.remove(center)
+        return list(set(output))
+
+    def peerFilter(self, center, others):
+        # DGVH
+        if(len(others) <= self.short_peer_min):
+            # print("not enough peers!")
+            return others, []
+        candidates = sorted(
+            others, key=lambda x: self.distfunc(center, x.loc))
+        selected = [candidates[0]]
+        candidates.remove(selected[0])
+        extra = []
+        rejected = False
+        for c in candidates:
+            mydist = self.distfunc(center, c.loc)
+            for p in selected:
+                if self.distfunc(p.loc, c.loc) < mydist:
+                    rejected = True
+                    break
+            if rejected:
+                extra.append(c)
+            else:
+                selected.append(c)
+        # assert(len(selected) + len(extra) == len(others))
+        if(len(selected) < self.short_peer_min):
+            selected = selected + extra[:self.short_peer_min - len(selected)]
+            extra = extra[self.short_peer_min - len(selected):]
+
+        return selected, self.longPeerFilter(center, extra)
+
+
+class ChordLogic(Logic):
+
+    def longPeerFilter(self, center, others):
+        output = []
+        # print(len(others))
+        for i in range(0, 32):
+            target = tuple([(center[0] + 2**i) % HASHMAX])
+            subject = min(others, key=lambda x: chordDist(target, x.loc))
+            if subject not in output:
+                output.append(subject)
+        return output
+
+    def peerFilter(self, center, others):
+        a = min(others, key=lambda x: chordDist(center, x.loc))
+        b = max(others, key=lambda x: chordDist(center, x.loc))
+
+        return list(set([a, b] + self.longPeerFilter(center, others))), []
 
 
 class Node(object):
@@ -95,15 +188,15 @@ class Node(object):
         new_pool.update(set(new_peers))
         if self in new_pool:
             new_pool.remove(self)
-        #assert(len(new_pool) >= len(set(self.short_peers + self.long_peers)))
+        # assert(len(new_pool) >= len(set(self.short_peers + self.long_peers)))
         self.short_peers, self.long_peers = self.logic.peerFilter(
             self.loc, list(new_pool))
-        #print(len(new_pool), len(set(self.short_peers + self.long_peers)))
-        #assert(len(new_pool) == len(set(self.short_peers + self.long_peers)))
+        # print(len(new_pool), len(set(self.short_peers + self.long_peers)))
+        # assert(len(new_pool) == len(set(self.short_peers + self.long_peers)))
 
         for p in self.short_peers:
             p.notify(self)
-        #print(len(self.short_peers) + len(self.long_peers))
+        # print(len(self.short_peers) + len(self.long_peers))
 
 
 def RunTrial(peerLogic, rlockfunc, outpath, size=200,
@@ -156,7 +249,19 @@ def euclid_mid(a, b):
 def euclid_dist(a, b):
     return sum(map(lambda x, y: (x - y)**2.0, a, b))**0.5
 
+
+def hash_random():
+    return tuple([int(random.random() * HASHMAX)])
+
+
+def chordDist(a, b):
+    return min((HASHMAX + b[0] - a[0]) % HASHMAX, (HASHMAX - b[0] + a[0]) % HASHMAX)
+
+
+def XORdist(a, b):
+    return a[0] ^ b[0]
+
 if __name__ == "__main__":
     random.seed(0)
-    l = Logic(lambda x, y: y, H.hDist, 20, 20)
-    RunTrial(l, circle_random, "hyperbolic.json", size=100)
+    l = KadLogic(lambda x, y: y, XORdist, 3, 10)
+    RunTrial(l, hash_random, "kadtest.json", size=500)

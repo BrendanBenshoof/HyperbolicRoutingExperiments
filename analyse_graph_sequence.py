@@ -5,6 +5,8 @@ from graphMarshal import unmarshal_graph
 
 from convergenceTest import *
 
+HASHMAX = 2**32
+
 try:
     import cPickle as pickle
 except ImportError:
@@ -17,6 +19,14 @@ import HyperbolicSpaceMath as H
 
 def edist(a, b):
     return sum(map(lambda x, y: (x - y)**2.0, a, b))**0.5
+
+
+def XORdist(a, b):
+    return a[0] ^ b[0]
+
+
+def chordDist(a, b):
+    return min((HASHMAX + b[0] - a[0]) % HASHMAX, (HASHMAX - b[0] + a[0]) % HASHMAX)
 
 
 def greedyReach(g, a, b, dist):
@@ -68,7 +78,7 @@ def Diameter_series(path):
             s_size = 100
             s_size = min([len(g.nodes()), s_size])
             results = workers.map(wrapper, zip(
-                [g] * s_size, random.sample(g.nodes(), s_size), random.sample(g.nodes(), s_size), [H.hDist] * s_size))
+                [g] * s_size, random.sample(g.nodes(), s_size), random.sample(g.nodes(), s_size), [XORdist] * s_size))
             total = sum(results) / s_size
             print(total)
             avgDist.append(total)
@@ -81,11 +91,12 @@ def Diameter_series(path):
 
             i += 1
         g = graphs[-1]
-        nx.draw(g, pos={x: g.node[x]['loc'] for x in g.nodes()})
+        nx.draw(g, pos={x: (math.sin(math.pi * 2 * g.node[x]['loc'][0] / HASHMAX), math.cos(
+            math.pi * 2 * g.node[x]['loc'][0] / HASHMAX)) for x in g.nodes()})
         plt.show()
         plt.plot(ticks, diameters)
         plt.plot(ticks, avgDist)
         plt.show()
 
 if __name__ == "__main__":
-    Diameter_series("hyperbolic.json")
+    Diameter_series("kadtest.json")

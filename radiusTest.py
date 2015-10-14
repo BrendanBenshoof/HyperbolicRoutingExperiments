@@ -12,11 +12,21 @@ from multiprocessing.pool import ThreadPool
 
 import HyperbolicSpaceMath as H
 
+HASHMAX = 2**160
+
 
 def circle_random():
     theta = random.random() * 2 * math.pi
     r = random.random()**2.0
     return math.sin(theta) * r, math.cos(theta) * r
+
+
+def hash_random():
+    return int(random.random() * HASHMAX)
+
+
+def chordDist(a, b):
+    return math.fabs(a, b)
 
 
 class Logic(object):
