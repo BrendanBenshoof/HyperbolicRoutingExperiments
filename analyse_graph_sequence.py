@@ -42,11 +42,7 @@ def greedyReach(g, a, b, dist):
 
 
 def wrapper(args):
-    res = greedyReach(*args)
-    if res < float("inf"):
-        return 1.0
-    else:
-        return 0.0
+    return greedyReach(*args)
 
 
 def Diameter_series(path):
@@ -63,22 +59,23 @@ def Diameter_series(path):
             print(i)
             ticks.append(i)
 
-            s_size = 20
+            s_size = 100
+            s_size = min([len(g.nodes()), s_size])
             results = workers.map(wrapper, zip(
                 [g] * s_size, random.sample(g.nodes(), s_size), random.sample(g.nodes(), s_size), [edist] * s_size))
             total = sum(results) / s_size
             avgDist.append(total)
-            """
+
             try:
 
                 diameters.append(nx.diameter(g))
             except:
                 diameters.append(float("inf"))
-            """
+
             i += 1
-        #plt.plot(ticks, diameters)
+        plt.plot(ticks, diameters)
         plt.plot(ticks, avgDist)
         plt.show()
 
 if __name__ == "__main__":
-    Diameter_series("test.json")
+    Diameter_series("increasing_size.json")

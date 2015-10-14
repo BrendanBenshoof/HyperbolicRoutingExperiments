@@ -137,5 +137,5 @@ def euclid_dist(a, b):
 
 if __name__ == "__main__":
     random.seed(0)
-    euclid_Logic = Logic(euclid_mid, euclid_dist, 9, 5)
-    RunTrial(euclid_Logic, euclid_random, "test.json", size=1000)
+    euclid_Logic = Logic(euclid_mid, euclid_dist, 3, 0)
+    RunTrial(euclid_Logic, euclid_random, "test.json", size=100)
