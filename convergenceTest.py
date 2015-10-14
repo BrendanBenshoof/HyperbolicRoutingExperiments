@@ -62,8 +62,8 @@ class Node(object):
         self.notified = []
         self.logic = dhtLogic
 
-    def __str__(self):
-        return str(self.loc)
+    def render(self):
+        return self.loc
 
     def join(self, bootstraps):
         self.short_peers = bootstraps[:]
