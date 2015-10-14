@@ -27,33 +27,42 @@ class Logic(object):
         else:
             return others
 
+    def peerFilter(self, center, others):
+        # DGVH
+        if(len(others) <= self.short_peer_min):
+            #print("not enough peers!")
+            return others, []
+        candidates = sorted(
+            others, key=lambda x: self.distfunc(center, x.loc))
+        selected = [candidates[0]]
+        candidates.remove(selected[0])
+        extra = []
+        rejected = False
+        for c in candidates:
+            mydist = self.distfunc(center, c.loc)
+            for p in selected:
+                if self.distfunc(p.loc, c.loc) < mydist:
+                    rejected = True
+                    break
+            if rejected:
+                extra.append(c)
+            else:
+                selected.append(c)
+        #assert(len(selected) + len(extra) == len(others))
+        if(len(selected) < self.short_peer_min):
+            selected = selected + extra[:self.short_peer_min - len(selected)]
+            extra = extra[self.short_peer_min - len(selected):]
 
-def peerFilter(self, center, others):
-    # DGVH
-    if(len(others) <= self.short_peer_min):
-        #print("not enough peers!")
-        return others, []
-    candidates = sorted(
-        others, key=lambda x: self.distfunc(center, x.loc))
-    selected = [candidates[0]]
-    candidates.remove(selected[0])
-    extra = []
-    for c in candidates:
-        mydist = self.distfunc(center, c.loc)
-        for p in selected:
-            if self.distfunc(p.loc, c.loc) < mydist:
-                rejected = True
-                break
-        if rejected:
-            extra.append(c)
+        return selected, self.longPeerFilter(center, extra)
+
+
+class HyperLogic(Logic):
+
+    def longPeerFilter(self, center, others):
+        if len(others) > self.long_peer_max:
+            return others[len(others) - self.long_peer_max:]
         else:
-            selected.append(c)
-    #assert(len(selected) + len(extra) == len(others))
-    if(len(selected) < self.short_peer_min):
-        selected = selected + extra[:self.short_peer_min - len(selected)]
-        extra = extra[self.short_peer_min - len(selected):]
-
-    return selected, self.longPeerFilter(center, extra)
+            return others
 
 
 class Node(object):
@@ -79,10 +88,11 @@ class Node(object):
 
     def tick(self):
         new_pool = set(self.short_peers + self.long_peers + self.notified)
+        # print(self.notified)
         self.notified = []
-        for p in self.short_peers:
-            new_peers = p.getPeers()
-            new_pool.update(set(new_peers))
+        p = random.choice(self.short_peers)
+        new_peers = p.getPeers()
+        new_pool.update(set(new_peers))
         if self in new_pool:
             new_pool.remove(self)
         #assert(len(new_pool) >= len(set(self.short_peers + self.long_peers)))
@@ -97,8 +107,8 @@ class Node(object):
 
 
 def RunTrial(peerLogic, rlockfunc, outpath, size=200,
-             random_peers=20, iterations=20):
-    workers = ThreadPool(size)
+             random_peers=20, iterations=100):
+
     output = []
     nodes = [Node(rlockfunc(), peerLogic) for x in range(size)]
     for n in nodes:
@@ -114,7 +124,7 @@ def RunTrial(peerLogic, rlockfunc, outpath, size=200,
             g.add_edge(n, p)
     output.append(g)
     for i in range(iterations):
-        workers.map(lambda x: x.tick(), nodes)
+        list(map(lambda x: x.tick(), nodes))
         g = nx.DiGraph()
         g.add_nodes_from(nodes)
         for n in nodes:
@@ -133,7 +143,9 @@ def euclid_random():
 
 def circle_random():
     theta = random.random() * 2 * math.pi
-    r = random.random()**2.0
+    r = (random.random() + random.random())
+    if r > 1.0:
+        r = 2.0 - r
     return math.sin(theta) * r, math.cos(theta) * r
 
 
@@ -146,5 +158,5 @@ def euclid_dist(a, b):
 
 if __name__ == "__main__":
     random.seed(0)
-    euclid_Logic = Logic(lambda x, y: y, H.hDist, 1, 16)
-    RunTrial(euclid_Logic, circle_random, "Hypertest.json", size=100)
+    l = Logic(lambda x, y: y, H.hDist, 20, 20)
+    RunTrial(l, circle_random, "hyperbolic.json", size=100)

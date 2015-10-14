@@ -12,6 +12,8 @@ except ImportError:
 
 from multiprocessing import Pool
 
+import HyperbolicSpaceMath as H
+
 
 def edist(a, b):
     return sum(map(lambda x, y: (x - y)**2.0, a, b))**0.5
@@ -42,13 +44,17 @@ def greedyReach(g, a, b, dist):
 
 
 def wrapper(args):
-    return greedyReach(*args)
+    res = greedyReach(*args)
+    if res < float("inf"):
+        return 1.0
+    else:
+        return 0.0
 
 
 def Diameter_series(path):
     workers = Pool(4)
     with open(path, "r") as fp:
-        graphs = map(unmarshal_graph, json.load(fp))
+        graphs = list(map(unmarshal_graph, json.load(fp)))
         ticks = []
         i = 0
         diameters = []
@@ -62,8 +68,9 @@ def Diameter_series(path):
             s_size = 100
             s_size = min([len(g.nodes()), s_size])
             results = workers.map(wrapper, zip(
-                [g] * s_size, random.sample(g.nodes(), s_size), random.sample(g.nodes(), s_size), [edist] * s_size))
+                [g] * s_size, random.sample(g.nodes(), s_size), random.sample(g.nodes(), s_size), [H.hDist] * s_size))
             total = sum(results) / s_size
+            print(total)
             avgDist.append(total)
 
             try:
@@ -73,9 +80,12 @@ def Diameter_series(path):
                 diameters.append(float("inf"))
 
             i += 1
+        g = graphs[-1]
+        nx.draw(g, pos={x: g.node[x]['loc'] for x in g.nodes()})
+        plt.show()
         plt.plot(ticks, diameters)
         plt.plot(ticks, avgDist)
         plt.show()
 
 if __name__ == "__main__":
-    Diameter_series("Hyperincreasing_size.json")
+    Diameter_series("hyperbolic.json")
