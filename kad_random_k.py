@@ -305,7 +305,7 @@ def XORdist(a, b):
 if __name__ == "__main__":
     random.seed(0)
     for k in [10, 20]:
-        for n in [100, 500, 1000, 5000]:
+        for n in [100, 500, 1000]:
             l = KadLogic(lambda x, y: y, XORdist, 7, 49)
             RunTrial(l, hash_random, "krand_kad_%s_%s_.json" %
                      (str(k), str(n)), size=n, random_peers=k)
