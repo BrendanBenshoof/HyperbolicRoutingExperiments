@@ -45,9 +45,9 @@ def greedyReach(g, a, b, dist):
     while i < maxhops:
 
         hops = list(map(lambda x: x[1], g.out_edges_iter(path[-1])))
-        if b in hops:
-            break
         nexthop = min(hops, key=lambda x: dist(target, g.node[x]["loc"]))
+        if nexthop == b:
+            break
         if nexthop in path:
             i = maxhops
         path.append(nexthop)
@@ -84,7 +84,7 @@ def Diameter_series(path):
             s_size = 100
             s_size = min([len(g.nodes()), s_size])
             results = workers.map(wrapper, zip(
-                [g] * s_size, random.sample(g.nodes(), s_size), random.sample(g.nodes(), s_size), [chordDist] * s_size))
+                [g] * s_size, random.sample(g.nodes(), s_size), random.sample(g.nodes(), s_size), [XORdist] * s_size))
             total = sum(results) / s_size
             print(total)
             avgDist.append(total)

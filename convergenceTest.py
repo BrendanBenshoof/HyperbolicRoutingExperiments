@@ -71,7 +71,7 @@ class HyperLogic(Logic):
 class KadLogic(Logic):
 
     def longPeerFilter(self, center, others):
-        bucketSize = 10
+        bucketSize = 3
         buckets = {(0, HASHMAX): [center]}
         for o in others:
             mybucket = None
@@ -110,7 +110,7 @@ class KadLogic(Logic):
             output += buckets[b]
         output.remove(center)
         return list(set(output))
-
+"""
     def peerFilter(self, center, others):
         # DGVH
         if(len(others) <= self.short_peer_min):
@@ -138,6 +138,7 @@ class KadLogic(Logic):
             extra = extra[self.short_peer_min - len(selected):]
 
         return selected, self.longPeerFilter(center, extra)
+"""
 
 
 class ChordLogic(Logic):
@@ -305,5 +306,5 @@ def XORdist(a, b):
 
 if __name__ == "__main__":
     random.seed(0)
-    l = ChordLogic(lambda x, y: y, chordDist, 7, 0)
-    RunTrial(l, hash_random, "kadtest.json", size=50)
+    l = Logic(lambda x, y: y, XORdist, 7, 49)
+    RunTrial(l, hash_random, "kadtest.json", size=200)
