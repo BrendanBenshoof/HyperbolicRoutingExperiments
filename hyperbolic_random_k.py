@@ -307,5 +307,5 @@ if __name__ == "__main__":
     for k in [10, 20]:
         for n in [100, 500, 1000, 5000]:
             l = Logic(lambda x, y: y, H.hDIst, 7, 49)
-            RunTrial(l, circle_random, "krand_hyper_%d_%d_.json" %
+            RunTrial(l, circle_random, "krand_hyper_%s_%s_.json" %
                      (str(k), str(n)), size=n, random_peers=k)

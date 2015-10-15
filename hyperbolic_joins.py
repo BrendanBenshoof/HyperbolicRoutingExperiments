@@ -307,5 +307,5 @@ if __name__ == "__main__":
     for rate in [1, 3]:
         for n in [1000, 5000]:
             l = Logic(lambda x, y: y, H.hDist, 7, 49)
-            JoinTrial(l, circle_random, "join_hyper_%d_%d_.json" %
+            JoinTrial(l, circle_random, "join_hyper_%s_%s_.json" %
                       (str(rate), str(n)), size=n, ticksperjoin=rate)

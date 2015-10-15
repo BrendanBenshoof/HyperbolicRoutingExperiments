@@ -307,5 +307,5 @@ if __name__ == "__main__":
     for k in [10, 20]:
         for n in [100, 500, 1000, 5000]:
             l = ChordLogic(lambda x, y: y, chordDist, 7, 49)
-            RunTrial(l, hash_random, "krand_chord_%d_%d_.json" %
+            RunTrial(l, hash_random, "krand_chord_%s_%s_.json" %
                      (str(k), str(n)), size=n, random_peers=k)
