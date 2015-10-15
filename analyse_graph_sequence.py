@@ -5,7 +5,8 @@ from graphMarshal import unmarshal_graph
 
 from convergenceTest import *
 
-HASHMAX = 2**32
+HASHBASE = 120
+HASHMAX = 2**HASHBASE
 
 try:
     import cPickle as pickle
@@ -26,7 +27,12 @@ def XORdist(a, b):
 
 
 def chordDist(a, b):
-    return min((HASHMAX + b[0] - a[0]) % HASHMAX, (HASHMAX - b[0] + a[0]) % HASHMAX)
+    a = a[0]
+    b = b[0]
+    delta = b - a
+    if delta < 0:
+        return HASHMAX + delta
+    return delta
 
 
 def greedyReach(g, a, b, dist):
@@ -46,7 +52,7 @@ def greedyReach(g, a, b, dist):
             i = maxhops
         path.append(nexthop)
         i += 1
-    #print(path, b)
+    # print(path, b)
     if i >= maxhops:
         return float("inf")
     else:
@@ -70,7 +76,7 @@ def Diameter_series(path):
         diameters = []
         avgDist = []
         for g in graphs:
-            #nx.draw(g, pos={x: g.node[x]['loc'] for x in g.nodes()})
+            # nx.draw(g, pos={x: g.node[x]['loc'] for x in g.nodes()})
             # plt.show()
             print(i)
             ticks.append(i)
@@ -78,7 +84,7 @@ def Diameter_series(path):
             s_size = 100
             s_size = min([len(g.nodes()), s_size])
             results = workers.map(wrapper, zip(
-                [g] * s_size, random.sample(g.nodes(), s_size), random.sample(g.nodes(), s_size), [XORdist] * s_size))
+                [g] * s_size, random.sample(g.nodes(), s_size), random.sample(g.nodes(), s_size), [chordDist] * s_size))
             total = sum(results) / s_size
             print(total)
             avgDist.append(total)
@@ -93,6 +99,7 @@ def Diameter_series(path):
         g = graphs[-1]
         nx.draw(g, pos={x: (math.sin(math.pi * 2 * g.node[x]['loc'][0] / HASHMAX), math.cos(
             math.pi * 2 * g.node[x]['loc'][0] / HASHMAX)) for x in g.nodes()})
+        #nx.draw(g, labels={x: (100 * g.node[x]["loc"][0]) // HASHMAX for x in g.nodes()})
         plt.show()
         plt.plot(ticks, diameters)
         plt.plot(ticks, avgDist)

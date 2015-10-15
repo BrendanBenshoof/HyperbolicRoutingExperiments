@@ -12,7 +12,8 @@ from multiprocessing.pool import ThreadPool
 
 import HyperbolicSpaceMath as H
 
-HASHMAX = 2**32
+HASHBASE = 120
+HASHMAX = 2**HASHBASE
 
 
 class Logic(object):
@@ -144,18 +145,22 @@ class ChordLogic(Logic):
     def longPeerFilter(self, center, others):
         output = []
         # print(len(others))
-        for i in range(0, 32):
+        for i in range(0, HASHBASE):
             target = tuple([(center[0] + 2**i) % HASHMAX])
-            subject = min(others, key=lambda x: chordDist(target, x.loc))
+            subject = min(others, key=lambda x: chordDist(x.loc, target))
             if subject not in output:
                 output.append(subject)
         return output
 
     def peerFilter(self, center, others):
+        if len(others) <= 2:
+            return others, []
         a = min(others, key=lambda x: chordDist(center, x.loc))
-        b = max(others, key=lambda x: chordDist(center, x.loc))
+        b = min(others, key=lambda x: chordDist(x.loc, center))
+        others.remove(a)
+        others.remove(b)
 
-        return list(set([a, b] + self.longPeerFilter(center, others))), []
+        return [a, b], self.longPeerFilter(center, others)
 
 
 class Node(object):
@@ -170,11 +175,19 @@ class Node(object):
     def render(self):
         return self.loc
 
-    def join(self, bootstraps):
+    def join(self, bootstraps, distfunc=None):
+        """
+        parent = min(bootstraps, key=lambda x: distfunc(self.loc, x.loc))
+        self.short_peers = parent.getPeers() + [parent]
+        for p in self.short_peers:
+            p.notify(self)
+        """
         self.short_peers = bootstraps[:]
+        for p in self.short_peers:
+            p.notify(self)
 
     def getPeers(self):
-        return list(set(self.short_peers))
+        return list(set(self.short_peers + self.long_peers))
 
     def notify(self, other):
         self.notified.append(other)
@@ -183,9 +196,9 @@ class Node(object):
         new_pool = set(self.short_peers + self.long_peers + self.notified)
         # print(self.notified)
         self.notified = []
-        p = random.choice(self.short_peers)
-        new_peers = p.getPeers()
-        new_pool.update(set(new_peers))
+        for p in self.short_peers:
+            new_peers = p.getPeers()
+            new_pool.update(set(new_peers))
         if self in new_pool:
             new_pool.remove(self)
         # assert(len(new_pool) >= len(set(self.short_peers + self.long_peers)))
@@ -230,6 +243,30 @@ def RunTrial(peerLogic, rlockfunc, outpath, size=200,
         json.dump(list(map(marshal_graph, output)), fp)
 
 
+def JoinTrial(peerLogic, rlockfunc, outpath, size=200, ticksperjoin=1):
+    workers = ThreadPool(size)
+    output = []
+    nodes = [Node(rlockfunc(), peerLogic)]
+    g = nx.DiGraph()
+    for i in range(size):
+        newnode = Node(rlockfunc(), peerLogic)
+        newnode.join(nodes, peerLogic.distfunc)
+        nodes.append(newnode)
+
+        gprime = nx.DiGraph()
+        gprime.add_nodes_from(nodes)
+        for j in range(ticksperjoin):
+            workers.map(lambda x: x.tick(), nodes)
+        for n in nodes:
+            gprime.node[n]["loc"] = n.loc
+            for p in n.getPeers():
+                gprime.add_edge(n, p)
+        output.append(gprime)
+        print(i)
+    with open(outpath, "w") as fp:
+        json.dump(list(map(marshal_graph, output)), fp)
+
+
 def euclid_random():
     return (random.random(), random.random())
 
@@ -255,7 +292,12 @@ def hash_random():
 
 
 def chordDist(a, b):
-    return min((HASHMAX + b[0] - a[0]) % HASHMAX, (HASHMAX - b[0] + a[0]) % HASHMAX)
+    a = a[0]
+    b = b[0]
+    delta = b - a
+    if delta < 0:
+        return HASHMAX + delta
+    return delta
 
 
 def XORdist(a, b):
@@ -263,5 +305,5 @@ def XORdist(a, b):
 
 if __name__ == "__main__":
     random.seed(0)
-    l = KadLogic(lambda x, y: y, XORdist, 3, 10)
-    RunTrial(l, hash_random, "kadtest.json", size=500)
+    l = ChordLogic(lambda x, y: y, chordDist, 7, 0)
+    RunTrial(l, hash_random, "kadtest.json", size=50)
