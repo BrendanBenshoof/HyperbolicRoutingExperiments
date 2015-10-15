@@ -1,6 +1,5 @@
 import networkx as nx
 import random
-import threading
 
 import json
 
@@ -59,13 +58,13 @@ class Logic(object):
         return selected, self.longPeerFilter(center, extra)
 
 
-class HyperLogic(Logic):
-
-    def longPeerFilter(self, center, others):
-        if len(others) > self.long_peer_max:
-            return others[len(others) - self.long_peer_max:]
-        else:
-            return others
+# class HyperLogic(Logic):
+#
+#    def longPeerFilter(self, center, others):
+#       if len(others) > self.long_peer_max:
+#            return others[len(others) - self.long_peer_max:]
+#        else:
+#            return others
 
 
 class KadLogic(Logic):
@@ -98,8 +97,9 @@ class KadLogic(Logic):
                             left_list.append(thing)
                         else:
                             right_list.append(thing)
-                if o.loc[0] in range(left_b[0], left_b[1]) and len(left_list) < bucketSize:
-                    left_list.append(o)
+                if o.loc[0] in range(left_b[0], left_b[1]):
+                    if len(left_list) < bucketSize:
+                        left_list.append(o)
                 elif len(right_list) < bucketSize:
                     right_list.append(o)
                 buckets[left_b] = left_list
@@ -213,11 +213,11 @@ class Node(object):
         # print(len(self.short_peers) + len(self.long_peers))
 
 
-def RunTrial(peerLogic, rlockfunc, outpath, size=200,
+def RunTrial(peerLogic, rlocfunc, outpath, size=200,
              random_peers=20, iterations=100):
 
     output = []
-    nodes = [Node(rlockfunc(), peerLogic) for x in range(size)]
+    nodes = [Node(rlocfunc(), peerLogic) for x in range(size)]
     for n in nodes:
         others = nodes[:]
         others.remove(n)
@@ -244,20 +244,18 @@ def RunTrial(peerLogic, rlockfunc, outpath, size=200,
         json.dump(list(map(marshal_graph, output)), fp)
 
 
-def JoinTrial(peerLogic, rlockfunc, outpath, size=200, ticksperjoin=1):
-    workers = ThreadPool(size)
+def JoinTrial(peerLogic, rlocfunc, outpath, size=200, ticksperjoin=1):
     output = []
-    nodes = [Node(rlockfunc(), peerLogic)]
-    g = nx.DiGraph()
+    nodes = [Node(rlocfunc(), peerLogic)]
     for i in range(size):
-        newnode = Node(rlockfunc(), peerLogic)
+        newnode = Node(rlocfunc(), peerLogic)
         newnode.join(nodes, peerLogic.distfunc)
         nodes.append(newnode)
 
         gprime = nx.DiGraph()
         gprime.add_nodes_from(nodes)
         for j in range(ticksperjoin):
-            workers.map(lambda x: x.tick(), nodes)
+            list(map(lambda x: x.tick(), nodes))
         for n in nodes:
             gprime.node[n]["loc"] = n.loc
             for p in n.getPeers():
