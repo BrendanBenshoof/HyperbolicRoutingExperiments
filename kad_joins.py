@@ -305,7 +305,7 @@ def XORdist(a, b):
 if __name__ == "__main__":
     random.seed(0)
     for rate in [1, 3]:
-        for n in [1000]:
+        for n in [500]:
             l = KadLogic(lambda x, y: y, XORdist, 7, 49)
             JoinTrial(l, hash_random, "join_kad_%s_%s_.json" %
                       (str(rate), str(n)), size=n, ticksperjoin=rate)
