@@ -149,6 +149,6 @@ if __name__ == "__main__":
         ("krand_kad_10_500_.json", XORdist),
         ("krand_kad_20_1000_.json", XORdist),
         ("krand_kad_20_100_.json", XORdist),
-        ("krand_kad_20_500_.json"XORdist)
+        ("krand_kad_20_500_.json", XORdist)
     ]
     list(map(Diameter_series, targets))
