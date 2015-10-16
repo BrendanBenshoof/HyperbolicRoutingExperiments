@@ -107,9 +107,9 @@ def Diameter_series(args):
                 diameters.append(float("inf"))
 
             i += 1
-        # g = graphs[-1]
-        # nx.draw(g, pos={x: (math.sin(math.pi * 2 * g.node[x]['loc'][0] / HASHMAX), math.cos(
-            # math.pi * 2 * g.node[x]['loc'][0] / HASHMAX)) for x in g.nodes()})
+        g = graphs[-1]
+        nx.draw(g, pos={x: g.node[x]['loc'] for x in g.nodes()})
+        plt.show()
         # nx.draw(g, labels={x: (100 * g.node[x]["loc"][0]) // HASHMAX for x in g.nodes()})
         output = {"ticks": ticks, "diameters": diameters, "greedydist": avgDist,
                   "hitrate": hitrate, "maxdegree": maxDegree, "meanDegree": meanDegree}
@@ -118,6 +118,7 @@ def Diameter_series(args):
 
 
 if __name__ == "__main__":
+    """
     targets = [
         ("join_chord_1_500_.json", chordDist),
         ("join_chord_1_1000_.json", chordDist),
@@ -151,4 +152,11 @@ if __name__ == "__main__":
         ("krand_kad_20_100_.json", XORdist),
         ("krand_kad_20_500_.json", XORdist)
     ]
+    """
+    targets = [
+        ("better_join_hyper_1_500_.json",  H.hDist),
+        ("better_join_hyper_3_500_.json",  H.hDist),
+        ("better_krand_hyper_10_100_.json", H.hDist),
+        ("better_krand_hyper_10_500_.json", H.hDist)]
+
     list(map(Diameter_series, targets))
