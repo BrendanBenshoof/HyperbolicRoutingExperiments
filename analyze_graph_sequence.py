@@ -60,11 +60,7 @@ def greedyReach(g, a, b, dist):
 
 
 def wrapper(args):
-    res = greedyReach(*args)
-    if res < float("inf"):
-        return 1.0
-    else:
-        return 0.0
+    return greedyReach(*args)
 
 
 def Diameter_series(path):
@@ -75,6 +71,9 @@ def Diameter_series(path):
         i = 0
         diameters = []
         avgDist = []
+        hitrate = []
+        maxDegree = []
+        meanDegree = []
         for g in graphs:
             # nx.draw(g, pos={x: g.node[x]['loc'] for x in g.nodes()})
             # plt.show()
@@ -88,6 +87,17 @@ def Diameter_series(path):
             total = sum(results) / s_size
             print(total)
             avgDist.append(total)
+            if total < float("inf"):
+                hitrate.append(1.0)
+            else:
+                total_hits = 0.0
+                for v in results:
+                    if v < float("inf"):
+                        total_hits += 1.0
+                hitrate.append(total_hits / len(results))
+            degree_sequence = sorted(nx.degree(g).values(), reverse=True)
+            maxDegree.append(max(degree_sequence))
+            meanDegree.append(sum(degree_sequence) / len(degree_sequence))
 
             try:
 
@@ -96,14 +106,18 @@ def Diameter_series(path):
                 diameters.append(float("inf"))
 
             i += 1
-        g = graphs[-1]
-        nx.draw(g, pos={x: (math.sin(math.pi * 2 * g.node[x]['loc'][0] / HASHMAX), math.cos(
-            math.pi * 2 * g.node[x]['loc'][0] / HASHMAX)) for x in g.nodes()})
-        #nx.draw(g, labels={x: (100 * g.node[x]["loc"][0]) // HASHMAX for x in g.nodes()})
-        plt.show()
-        plt.plot(ticks, diameters)
-        plt.plot(ticks, avgDist)
-        plt.show()
+        # g = graphs[-1]
+        # nx.draw(g, pos={x: (math.sin(math.pi * 2 * g.node[x]['loc'][0] / HASHMAX), math.cos(
+            # math.pi * 2 * g.node[x]['loc'][0] / HASHMAX)) for x in g.nodes()})
+        # nx.draw(g, labels={x: (100 * g.node[x]["loc"][0]) // HASHMAX for x in g.nodes()})
+        output = {"ticks": ticks, "diameters": diameters, "greedydist": avgDist,
+                  "hitrate": hitrate, "maxdegree": maxDegree, "meanDegree": meanDegree}
+        with open("data_" + path, "w") as fp:
+            json.dump(output, fp)
+
 
 if __name__ == "__main__":
-    Diameter_series("kadtest.json")
+    workers = Pool(4)
+    targets = ["join_chord_1_500_.json", "join_chord_1_1000_.json", "join_chord_3_1000_.json""join_chord_3_500_.json", "join_euclid_1_500_.json", "join_euclid_3_500_.json", "join_hyper_1_500_.json", "join_hyper_3_500_.json", "join_kad_1_500_.json", "join_kad_3_500_.json", "krand_chord_10_1000_.json", "krand_chord_10_100_.json", "krand_chord_10_500_.json", "krand_chord_20_1000_.json", "krand_chord_20_100_.json", "krand_chord_20_500_.json",
+               "krand_euclid_10_1000_.json", "krand_euclid_10_100_.json", "krand_euclid_10_500_.json", "krand_euclid_20_1000_.json", "krand_euclid_20_100_.json", "krand_euclid_20_500_.json", "krand_hyper_10_1000_.json", "krand_hyper_10_100_.json", "krand_hyper_10_500_.json", "krand_kad_10_1000_.json", "krand_kad_10_100_.json", "krand_kad_10_500_.json", "krand_kad_20_1000_.json", "krand_kad_20_100_.json", "krand_kad_20_500_.json"]
+    workers.map(Diameter_series, targets)
