@@ -63,7 +63,8 @@ def wrapper(args):
     return greedyReach(*args)
 
 
-def Diameter_series(path):
+def Diameter_series(args):
+    path, distfunc = args
     workers = Pool(4)
     with open(path, "r") as fp:
         graphs = list(map(unmarshal_graph, json.load(fp)))
@@ -83,7 +84,7 @@ def Diameter_series(path):
             s_size = 100
             s_size = min([len(g.nodes()), s_size])
             results = workers.map(wrapper, zip(
-                [g] * s_size, random.sample(g.nodes(), s_size), random.sample(g.nodes(), s_size), [XORdist] * s_size))
+                [g] * s_size, random.sample(g.nodes(), s_size), random.sample(g.nodes(), s_size), [distfunc] * s_size))
             total = sum(results) / s_size
             print(total)
             avgDist.append(total)
@@ -117,7 +118,37 @@ def Diameter_series(path):
 
 
 if __name__ == "__main__":
-    workers = Pool(4)
-    targets = ["join_chord_1_500_.json", "join_chord_1_1000_.json", "join_chord_3_1000_.json""join_chord_3_500_.json", "join_euclid_1_500_.json", "join_euclid_3_500_.json", "join_hyper_1_500_.json", "join_hyper_3_500_.json", "join_kad_1_500_.json", "join_kad_3_500_.json", "krand_chord_10_1000_.json", "krand_chord_10_100_.json", "krand_chord_10_500_.json", "krand_chord_20_1000_.json", "krand_chord_20_100_.json", "krand_chord_20_500_.json",
-               "krand_euclid_10_1000_.json", "krand_euclid_10_100_.json", "krand_euclid_10_500_.json", "krand_euclid_20_1000_.json", "krand_euclid_20_100_.json", "krand_euclid_20_500_.json", "krand_hyper_10_1000_.json", "krand_hyper_10_100_.json", "krand_hyper_10_500_.json", "krand_kad_10_1000_.json", "krand_kad_10_100_.json", "krand_kad_10_500_.json", "krand_kad_20_1000_.json", "krand_kad_20_100_.json", "krand_kad_20_500_.json"]
-    workers.map(Diameter_series, targets)
+    targets = [
+        ("join_chord_1_500_.json", chordDist),
+        ("join_chord_1_1000_.json", chordDist),
+        ("join_chord_3_1000_.json", chordDist),
+        ("join_chord_3_500_.json", chordDist),
+        ("join_euclid_1_500_.json", edist),
+        ("join_euclid_3_500_.json", edist),
+        ("join_hyper_1_500_.json", H.hDist),
+        ("join_hyper_3_500_.json", H.hDist),
+        ("join_kad_1_500_.json", XORdist),
+        ("join_kad_3_500_.json", XORdist),
+        ("krand_chord_10_1000_.json", chordDist),
+        ("krand_chord_10_100_.json", chordDist),
+        ("krand_chord_10_500_.json", chordDist),
+        ("krand_chord_20_1000_.json", chordDist),
+        ("krand_chord_20_100_.json", chordDist),
+        ("krand_chord_20_500_.json", chordDist),
+        ("krand_euclid_10_1000_.json", edist),
+        ("krand_euclid_10_100_.json", edist),
+        ("krand_euclid_10_500_.json", edist),
+        ("krand_euclid_20_1000_.json", edist),
+        ("krand_euclid_20_100_.json", edist),
+        ("krand_euclid_20_500_.json", edist),
+        ("krand_hyper_10_1000_.json", H.hDist),
+        ("krand_hyper_10_100_.json", H.hDist),
+        ("krand_hyper_10_500_.json", H.hDist),
+        ("krand_kad_10_1000_.json", XORdist),
+        ("krand_kad_10_100_.json", XORdist),
+        ("krand_kad_10_500_.json", XORdist),
+        ("krand_kad_20_1000_.json", XORdist),
+        ("krand_kad_20_100_.json", XORdist),
+        ("krand_kad_20_500_.json"XORdist)
+    ]
+    list(map(Diameter_series, targets))
