@@ -272,9 +272,9 @@ def euclid_random():
 
 def circle_random():
     theta = random.random() * 2 * math.pi
-    r = (random.random() + random.random())
-    if r > 1.0:
-        r = 2.0 - r
+    r = (random.random() + random.random()) * 0.7
+    if r > 0.7:
+        r = 1.4 - r
     return math.sin(theta) * r, math.cos(theta) * r
 
 
@@ -307,5 +307,5 @@ if __name__ == "__main__":
     for rate in [1, 3]:
         for n in [500]:
             l = Logic(lambda x, y: y, H.hDist, 7, 49)
-            JoinTrial(l, circle_random, "join_hyper_%s_%s_.json" %
+            JoinTrial(l, circle_random, "better_join_hyper_%s_%s_.json" %
                       (str(rate), str(n)), size=n, ticksperjoin=rate)
