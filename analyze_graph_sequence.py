@@ -96,7 +96,7 @@ def Diameter_series(args):
                     if v < float("inf"):
                         total_hits += 1.0
                 hitrate.append(total_hits / len(results))
-            degree_sequence = sorted(nx.degree(g).values(), reverse=True)
+            degree_sequence = sorted(g.out_degree(g.nodes()).values(), reverse=True)
             maxDegree.append(max(degree_sequence))
             meanDegree.append(sum(degree_sequence) / len(degree_sequence))
 
@@ -113,7 +113,7 @@ def Diameter_series(args):
         # nx.draw(g, labels={x: (100 * g.node[x]["loc"][0]) // HASHMAX for x in g.nodes()})
         output = {"ticks": ticks, "diameters": diameters, "greedydist": avgDist,
                   "hitrate": hitrate, "maxdegree": maxDegree, "meanDegree": meanDegree}
-        with open("data_" + path, "w") as fp:
+        with open("data2_" + path, "w") as fp:
             json.dump(output, fp)
 
 
@@ -154,9 +154,6 @@ if __name__ == "__main__":
     ]
     """
     targets = [
-        ("better_join_hyper_1_500_.json",  H.hDist),
-        ("better_join_hyper_3_500_.json",  H.hDist),
-        ("better_krand_hyper_10_100_.json", H.hDist),
-        ("better_krand_hyper_10_500_.json", H.hDist)]
+        ("krand_euclid_10_100_.json", edist)]
 
     list(map(Diameter_series, targets))

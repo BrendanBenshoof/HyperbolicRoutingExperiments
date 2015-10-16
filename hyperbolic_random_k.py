@@ -272,9 +272,9 @@ def euclid_random():
 
 def circle_random():
     theta = random.random() * 2 * math.pi
-    r = (random.random() + random.random())
-    if r > 1.0:
-        r = 2.0 - r
+    r = (random.random() + random.random()) * 0.7
+    if r > 0.7:
+        r = 1.4 - r
     return math.sin(theta) * r, math.cos(theta) * r
 
 
@@ -305,7 +305,7 @@ def XORdist(a, b):
 if __name__ == "__main__":
     random.seed(0)
     for k in [10, 20]:
-        for n in [100, 500, 1000, 5000]:
-            l = Logic(lambda x, y: y, H.hDIst, 7, 49)
-            RunTrial(l, circle_random, "krand_hyper_%s_%s_.json" %
+        for n in [100, 500, 1000]:
+            l = Logic(lambda x, y: y, H.hDist, 7, 49)
+            RunTrial(l, circle_random, "better_krand_hyper_%s_%s_.json" %
                      (str(k), str(n)), size=n, random_peers=k)
